@@ -44,6 +44,8 @@ parameters:
           en_US: Arena
     label:
       en_US: Module
+    human_description:
+      en_US: Which review game the task appears in.
     form: form
   - name: source
     type: string

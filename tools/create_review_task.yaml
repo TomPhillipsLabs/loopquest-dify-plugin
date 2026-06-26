@@ -1,0 +1,91 @@
+identity:
+  name: create_review_task
+  author: tomphillipslabs
+  label:
+    en_US: Create review task
+description:
+  human:
+    en_US: Send content to LoopQuest for a human to review (approve or flag).
+  llm: Submit AI-generated content to LoopQuest for human review. Returns the task id and status. The verdict arrives later via webhook or by polling get_task_status.
+parameters:
+  - name: content
+    type: string
+    required: true
+    label:
+      en_US: Content
+    human_description:
+      en_US: The AI output to be reviewed.
+    llm_description: The content a human should review.
+    form: llm
+  - name: title
+    type: string
+    required: false
+    label:
+      en_US: Title
+    human_description:
+      en_US: A short title shown on the review card.
+    form: llm
+  - name: module
+    type: select
+    required: false
+    default: swiper
+    options:
+      - value: swiper
+        label:
+          en_US: Swiper
+      - value: detective
+        label:
+          en_US: Detective
+      - value: decoy
+        label:
+          en_US: Decoy
+      - value: arena
+        label:
+          en_US: Arena
+    label:
+      en_US: Module
+    form: form
+  - name: source
+    type: string
+    required: false
+    label:
+      en_US: Source
+    human_description:
+      en_US: Originating workflow id.
+    form: form
+  - name: external_id
+    type: string
+    required: false
+    label:
+      en_US: External id
+    human_description:
+      en_US: Your correlation id, echoed back in the verdict webhook.
+    llm_description: A correlation id echoed back in the verdict webhook.
+    form: llm
+  - name: callback_url
+    type: string
+    required: false
+    label:
+      en_US: Callback URL
+    human_description:
+      en_US: Where LoopQuest POSTs the signed verdict.
+    form: form
+  - name: reviews_required
+    type: number
+    required: false
+    label:
+      en_US: Reviewers required
+    human_description:
+      en_US: How many independent reviewers must agree (1-5).
+    form: form
+  - name: payload_json
+    type: string
+    required: false
+    label:
+      en_US: Payload JSON (advanced)
+    human_description:
+      en_US: Raw JSON payload. Overrides Content when set.
+    form: form
+extra:
+  python:
+    source: tools/create_review_task.py

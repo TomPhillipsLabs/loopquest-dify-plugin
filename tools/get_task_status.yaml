@@ -1,0 +1,22 @@
+identity:
+  name: get_task_status
+  author: tomphillipslabs
+  label:
+    en_US: Get task status
+description:
+  human:
+    en_US: Check the status and verdict of a LoopQuest review task.
+  llm: Poll a LoopQuest task by id. Returns status (pending / reviewed / escalated), verdict, choice and external_id.
+parameters:
+  - name: task_id
+    type: string
+    required: true
+    label:
+      en_US: Task id
+    human_description:
+      en_US: The id returned by create_review_task.
+    llm_description: The LoopQuest task id to check.
+    form: llm
+extra:
+  python:
+    source: tools/get_task_status.py

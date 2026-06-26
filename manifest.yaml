@@ -1,0 +1,28 @@
+version: 0.1.0
+type: plugin
+author: tomphillipslabs
+name: loopquest
+label:
+  en_US: LoopQuest
+description:
+  en_US: Send AI output to LoopQuest for gamified human-in-the-loop review and receive a verdict back.
+icon: icon.svg
+resource:
+  memory: 1048576
+  permission:
+    tool:
+      enabled: true
+plugins:
+  tools:
+    - provider/loopquest.yaml
+meta:
+  version: 0.0.1
+  arch:
+    - amd64
+    - arm64
+  runner:
+    language: python
+    version: "3.12"
+    entrypoint: main
+created_at: 2026-06-26T00:00:00Z
+privacy: PRIVACY.md

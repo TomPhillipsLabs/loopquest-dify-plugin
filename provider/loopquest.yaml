@@ -1,0 +1,32 @@
+identity:
+  author: tomphillipslabs
+  name: loopquest
+  label:
+    en_US: LoopQuest
+  description:
+    en_US: Human-in-the-loop review for AI output.
+  icon: icon.svg
+credentials_for_provider:
+  api_key:
+    type: secret-input
+    required: true
+    label:
+      en_US: API key
+    placeholder:
+      en_US: A LoopQuest workspace API key
+    help:
+      en_US: Create one in LoopQuest under Workspaces → API keys (or use your public ingest secret).
+  base_url:
+    type: text-input
+    required: false
+    default: https://loopquest.tomphillips.uk
+    label:
+      en_US: Base URL
+    help:
+      en_US: Your LoopQuest deployment URL.
+tools:
+  - tools/create_review_task.yaml
+  - tools/get_task_status.yaml
+extra:
+  python:
+    source: provider/loopquest.py

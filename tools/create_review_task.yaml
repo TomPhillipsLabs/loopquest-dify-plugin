@@ -5,18 +5,75 @@ identity:
     en_US: Create review task
 description:
   human:
-    en_US: Send content to LoopQuest for a human to review (approve or flag).
-  llm: Submit AI-generated content to LoopQuest for human review. Returns the task id and status. The verdict arrives later via webhook or by polling get_task_status.
+    en_US: Send content to LoopQuest for a human to review. Block on it (gate) or review it in the background (monitor).
+  llm: Submit AI-generated content to LoopQuest for human review. Returns the task id and status. The verdict arrives later via webhook or by polling get_task_status. Use mode=gate to block until a human approves, or mode=monitor to review without blocking.
 parameters:
+  - name: module
+    type: select
+    required: false
+    default: swiper
+    options:
+      - value: swiper
+        label:
+          en_US: Swiper — approve or flag
+      - value: versus
+        label:
+          en_US: Versus — pick the better of two answers
+      - value: sorter
+        label:
+          en_US: Sorter — classify into a bucket
+      - value: detective
+        label:
+          en_US: Detective — find the error in long text
+      - value: fixer
+        label:
+          en_US: Fixer — confirm or correct fields
+      - value: redact
+        label:
+          en_US: Redact — mask sensitive data (PII / secrets)
+      - value: grounding
+        label:
+          en_US: Grounding — check a claim against its source
+    label:
+      en_US: Module
+    human_description:
+      en_US: Which review game the task appears in. Pick the one that matches the decision.
+    form: form
   - name: content
     type: string
-    required: true
+    required: false
     label:
       en_US: Content
     human_description:
-      en_US: The AI output to be reviewed.
+      en_US: The AI output to review. Used for Swiper, Detective and Redact (and as the claim for Grounding if Claim is empty).
     llm_description: The content a human should review.
     form: llm
+  - name: claim
+    type: string
+    required: false
+    label:
+      en_US: Claim (Grounding)
+    human_description:
+      en_US: Grounding only — the claim/answer to verify against the source.
+    llm_description: The claim or answer to verify (Grounding module).
+    form: llm
+  - name: source
+    type: string
+    required: false
+    label:
+      en_US: Source text (Grounding)
+    human_description:
+      en_US: Grounding only — the source/context the claim should be supported by.
+    llm_description: The source or retrieved context the claim must be grounded in (Grounding module).
+    form: llm
+  - name: choices
+    type: string
+    required: false
+    label:
+      en_US: Buckets (Sorter)
+    human_description:
+      en_US: Sorter only — comma-separated list of categories, e.g. "Billing, Technical, Account, Spam".
+    form: form
   - name: title
     type: string
     required: false
@@ -25,35 +82,56 @@ parameters:
     human_description:
       en_US: A short title shown on the review card.
     form: llm
-  - name: module
+  - name: mode
     type: select
     required: false
-    default: swiper
+    default: monitor
     options:
-      - value: swiper
+      - value: monitor
         label:
-          en_US: Swiper
-      - value: detective
+          en_US: Monitor — review in the background (non-blocking)
+      - value: gate
         label:
-          en_US: Detective
-      - value: decoy
-        label:
-          en_US: Decoy
-      - value: arena
-        label:
-          en_US: Arena
+          en_US: Gate — block until a human approves
     label:
-      en_US: Module
+      en_US: Mode
     human_description:
-      en_US: Which review game the task appears in.
+      en_US: Gate pauses your flow until a verdict; Monitor reviews without blocking.
     form: form
-  - name: source
+  - name: timeout_seconds
+    type: number
+    required: false
+    label:
+      en_US: Timeout (seconds, gate)
+    human_description:
+      en_US: Gate only — if no human decides within this many seconds, the fail-closed default is applied (30–2592000).
+    form: form
+  - name: on_timeout
+    type: select
+    required: false
+    default: escalate
+    options:
+      - value: escalate
+        label:
+          en_US: Escalate (fail-closed, default)
+      - value: reject
+        label:
+          en_US: Reject
+      - value: approve
+        label:
+          en_US: Approve
+    label:
+      en_US: On timeout (gate)
+    human_description:
+      en_US: Gate only — what to do if the timeout passes with no verdict.
+    form: form
+  - name: source_name
     type: string
     required: false
     label:
-      en_US: Source
+      en_US: Source tag
     human_description:
-      en_US: Originating workflow id.
+      en_US: A label for the originating tool/workflow, shown as a coloured tag on the card.
     form: form
   - name: external_id
     type: string
@@ -86,7 +164,7 @@ parameters:
     label:
       en_US: Payload JSON (advanced)
     human_description:
-      en_US: Raw JSON payload. Overrides Content when set.
+      en_US: Raw JSON payload. Overrides the fields above when set. Use for Versus ({prompt, a:{text}, b:{text}}) or Fixer ({fields:[{label,value}]}).
     form: form
 extra:
   python:

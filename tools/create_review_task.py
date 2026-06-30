@@ -13,8 +13,14 @@ class CreateReviewTaskTool(Tool):
         base = (creds.get("base_url") or "https://loopquest.tomphillips.uk").rstrip("/")
         api_key = creds.get("api_key")
 
+        module = tool_parameters.get("module") or "swiper"
         content = tool_parameters.get("content") or ""
+        claim = tool_parameters.get("claim") or ""
+        source_text = tool_parameters.get("source") or ""
+        title = tool_parameters.get("title")
 
+        # Build the payload in the shape each game expects, unless the advanced
+        # payload_json overrides everything.
         payload_json = tool_parameters.get("payload_json")
         if payload_json:
             try:
@@ -22,17 +28,46 @@ class CreateReviewTaskTool(Tool):
             except json.JSONDecodeError:
                 yield self.create_text_message("payload_json is not valid JSON.")
                 return
+        elif module == "grounding":
+            payload = {"claim": claim or content, "source": source_text}
+        elif module in ("redact", "detective"):
+            payload = {"body": content}
         else:
+            # swiper / sorter / versus / fixer: keep the content; card hints + the
+            # advanced payload handle the richer shapes.
             payload = {"content": content}
 
-        body: dict[str, Any] = {
-            "module": tool_parameters.get("module") or "swiper",
-            "payload": payload,
-        }
-        title = tool_parameters.get("title")
-        if title or content:
-            body["card"] = {"title": title or "Review", "body": content}
-        for key in ("source", "external_id", "callback_url"):
+        body: dict[str, Any] = {"module": module, "payload": payload}
+
+        # Card display hints. Sorter's buckets live here (card.choices).
+        card: dict[str, Any] = {}
+        if title:
+            card["title"] = title
+        if content and module == "swiper":
+            card["body"] = content
+        if module == "sorter":
+            choices = tool_parameters.get("choices") or ""
+            buckets = [c.strip() for c in choices.split(",") if c.strip()]
+            if buckets:
+                card["choices"] = buckets
+        if card:
+            body["card"] = card
+
+        # Gating + routing fields.
+        mode = tool_parameters.get("mode")
+        if mode:
+            body["mode"] = mode
+        timeout_seconds = tool_parameters.get("timeout_seconds")
+        if timeout_seconds:
+            body["timeout_seconds"] = int(timeout_seconds)
+        on_timeout = tool_parameters.get("on_timeout")
+        if on_timeout:
+            body["on_timeout"] = on_timeout
+
+        source_name = tool_parameters.get("source_name")
+        if source_name:
+            body["source"] = source_name
+        for key in ("external_id", "callback_url"):
             value = tool_parameters.get(key)
             if value:
                 body[key] = value

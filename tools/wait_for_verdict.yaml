@@ -1,0 +1,166 @@
+identity:
+  name: wait_for_verdict
+  author: tomphillipslabs
+  label:
+    en_US: Wait for verdict (blocking gate)
+description:
+  human:
+    en_US: Send content for human review and BLOCK this node until a person decides (or the timeout fails closed). Returns the verdict, so you can branch on approve vs flag. Use this to gate an automation on a human sign-off.
+  llm: Submit AI output to LoopQuest for human review and wait, blocking, until a human returns a verdict (or the fail-closed timeout is applied). Returns { verdict, verdict_choice, status, timed_out }. Use this before doing anything consequential that needs human sign-off, then branch on the verdict.
+parameters:
+  - name: module
+    type: select
+    required: false
+    default: swiper
+    options:
+      - value: swiper
+        label:
+          en_US: Swiper — approve or flag
+      - value: versus
+        label:
+          en_US: Versus — pick the better of two answers
+      - value: sorter
+        label:
+          en_US: Sorter — classify into a bucket
+      - value: detective
+        label:
+          en_US: Detective — find the error in long text
+      - value: fixer
+        label:
+          en_US: Fixer — confirm or correct fields
+      - value: redact
+        label:
+          en_US: Redact — mask sensitive data (PII / secrets)
+      - value: grounding
+        label:
+          en_US: Grounding — check a claim against its source
+    label:
+      en_US: Module
+    human_description:
+      en_US: Which review game the task appears in.
+    form: form
+  - name: content
+    type: string
+    required: false
+    label:
+      en_US: Content
+    human_description:
+      en_US: The AI output to review (Swiper, Detective, Redact; the claim for Grounding if Claim is empty).
+    llm_description: The content a human should approve or flag.
+    form: llm
+  - name: claim
+    type: string
+    required: false
+    label:
+      en_US: Claim (Grounding)
+    human_description:
+      en_US: Grounding only — the claim/answer to verify against the source.
+    llm_description: The claim or answer to verify (Grounding module).
+    form: llm
+  - name: source
+    type: string
+    required: false
+    label:
+      en_US: Source text (Grounding)
+    human_description:
+      en_US: Grounding only — the source/context the claim should be supported by.
+    llm_description: The source or retrieved context the claim must be grounded in (Grounding module).
+    form: llm
+  - name: choices
+    type: string
+    required: false
+    label:
+      en_US: Buckets (Sorter)
+    human_description:
+      en_US: Sorter only — comma-separated list of categories.
+    form: form
+  - name: title
+    type: string
+    required: false
+    label:
+      en_US: Title
+    human_description:
+      en_US: A short title shown on the review card.
+    form: llm
+  - name: timeout_seconds
+    type: number
+    required: false
+    default: 300
+    label:
+      en_US: Fail-closed timeout (seconds)
+    human_description:
+      en_US: If no human decides within this many seconds, LoopQuest applies the On-timeout default (30–2592000).
+    form: form
+  - name: on_timeout
+    type: select
+    required: false
+    default: escalate
+    options:
+      - value: escalate
+        label:
+          en_US: Escalate (fail-closed, default)
+      - value: reject
+        label:
+          en_US: Reject
+      - value: approve
+        label:
+          en_US: Approve
+    label:
+      en_US: On timeout
+    human_description:
+      en_US: What to do if the timeout passes with no verdict.
+    form: form
+  - name: max_wait_seconds
+    type: number
+    required: false
+    default: 300
+    label:
+      en_US: Max wait (seconds)
+    human_description:
+      en_US: How long this node blocks while polling before returning. Keep at or below your Dify request timeout. If it elapses while still pending, the current status is returned.
+    form: form
+  - name: poll_interval_seconds
+    type: number
+    required: false
+    default: 3
+    label:
+      en_US: Poll interval (seconds)
+    human_description:
+      en_US: How often to check for the verdict while waiting.
+    form: form
+  - name: source_name
+    type: string
+    required: false
+    label:
+      en_US: Source tag
+    human_description:
+      en_US: A label for the originating tool/workflow, shown as a coloured tag on the card.
+    form: form
+  - name: external_id
+    type: string
+    required: false
+    label:
+      en_US: External id
+    human_description:
+      en_US: Your correlation id.
+    llm_description: A correlation id.
+    form: llm
+  - name: reviews_required
+    type: number
+    required: false
+    label:
+      en_US: Reviewers required
+    human_description:
+      en_US: How many independent reviewers must agree (1-5).
+    form: form
+  - name: payload_json
+    type: string
+    required: false
+    label:
+      en_US: Payload JSON (advanced)
+    human_description:
+      en_US: Raw JSON payload. Overrides the fields above. Use for Versus ({prompt, a:{text}, b:{text}}) or Fixer ({fields:[{label,value}]}).
+    form: form
+extra:
+  python:
+    source: tools/wait_for_verdict.py

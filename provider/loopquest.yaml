@@ -26,6 +26,7 @@ credentials_for_provider:
       en_US: Your LoopQuest deployment URL.
 tools:
   - tools/create_review_task.yaml
+  - tools/wait_for_verdict.yaml
   - tools/get_task_status.yaml
 extra:
   python:
